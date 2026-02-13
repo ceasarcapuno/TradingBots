@@ -1,0 +1,141 @@
+// =============================================================================
+// Momentum Scalp Strategy — TradingView Pine Script v5
+// Generates webhook alerts for the autonomous trading system
+// =============================================================================
+// Deploy: Add to ES/NQ/BTC chart (1-min or 5-min timeframe)
+// Works best during trending sessions with elevated volume
+// =============================================================================
+
+//@version=5
+strategy("Momentum Scalp [Webhook]", overlay=true,
+     default_qty_type=strategy.fixed, default_qty_value=1,
+     initial_capital=50000, commission_value=2.5,
+     slippage=1, process_orders_on_close=false)
+
+// ─── Inputs ──────────────────────────────────────────────────────────────────
+fastEMA          = input.int(8, "Fast EMA Period", minval=3)
+slowEMA          = input.int(21, "Slow EMA Period", minval=10)
+rsiPeriod        = input.int(14, "RSI Period")
+rsiLongThresh    = input.int(55, "RSI Long Threshold")
+rsiShortThresh   = input.int(45, "RSI Short Threshold")
+adxPeriod        = input.int(14, "ADX Period")
+adxMin           = input.int(20, "Min ADX")
+volumeMinRatio   = input.float(1.2, "Min Volume Ratio", step=0.1)
+targetATR        = input.float(1.5, "Target (ATR multiplier)", step=0.1)
+stopATR          = input.float(1.0, "Stop (ATR multiplier)", step=0.1)
+maxTradesPerDay  = input.int(4, "Max Trades Per Day")
+webhookToken     = input.string("YOUR_SECRET_TOKEN", "Webhook Auth Token")
+
+// ─── Session Filter ─────────────────────────────────────────────────────────
+inSession = not na(time(timeframe.period, "0830-1500", "America/Chicago"))
+
+// ─── Indicators ─────────────────────────────────────────────────────────────
+emaFast     = ta.ema(close, fastEMA)
+emaSlow     = ta.ema(close, slowEMA)
+rsiValue    = ta.rsi(close, rsiPeriod)
+atrValue    = ta.atr(14)
+volumeAvg   = ta.sma(volume, 20)
+volumeRatio = volume / volumeAvg
+
+[diPlus, diMinus, adxValue] = ta.dmi(adxPeriod, adxPeriod)
+
+// ─── EMA Crossover Detection ────────────────────────────────────────────────
+bullishCross = ta.crossover(emaFast, emaSlow)
+bearishCross = ta.crossunder(emaFast, emaSlow)
+
+// ─── Trade Counter ──────────────────────────────────────────────────────────
+var int tradesToday = 0
+
+// Reset counter at start of session
+if inSession and not inSession[1]
+    tradesToday := 0
+
+// ─── Entry Conditions ───────────────────────────────────────────────────────
+noOpenTrade = strategy.position_size == 0
+underLimit  = tradesToday < maxTradesPerDay
+hasTrend    = adxValue >= adxMin
+hasVolume   = volumeRatio >= volumeMinRatio
+
+// Minimum bar momentum check
+barMomentum = math.abs(close - open) / close > 0.001
+
+longCondition = inSession and noOpenTrade and underLimit and
+     hasTrend and hasVolume and barMomentum and
+     bullishCross and rsiValue > rsiLongThresh
+
+shortCondition = inSession and noOpenTrade and underLimit and
+     hasTrend and hasVolume and barMomentum and
+     bearishCross and rsiValue < rsiShortThresh
+
+// ─── Trade Execution ────────────────────────────────────────────────────────
+longStop    = close - atrValue * stopATR
+longTarget  = close + atrValue * targetATR
+shortStop   = close + atrValue * stopATR
+shortTarget = close - atrValue * targetATR
+
+if longCondition
+    strategy.entry("Long", strategy.long)
+    strategy.exit("Long Exit", "Long", stop=longStop, limit=longTarget)
+    tradesToday += 1
+
+if shortCondition
+    strategy.entry("Short", strategy.short)
+    strategy.exit("Short Exit", "Short", stop=shortStop, limit=shortTarget)
+    tradesToday += 1
+
+// Exit on reverse crossover (momentum lost)
+if strategy.position_size > 0 and bearishCross
+    strategy.close("Long", "EMA Reverse")
+if strategy.position_size < 0 and bullishCross
+    strategy.close("Short", "EMA Reverse")
+
+// RSI extremes exit
+if strategy.position_size > 0 and rsiValue > 75
+    strategy.close("Long", "RSI Overbought")
+if strategy.position_size < 0 and rsiValue < 25
+    strategy.close("Short", "RSI Oversold")
+
+// Session end exit
+if not inSession and strategy.position_size != 0
+    strategy.close_all("Session End")
+
+// ─── Confidence Calculation ─────────────────────────────────────────────────
+confidence = 0.5
+confidence := confidence + (adxValue > 30 ? 0.1 : 0.0)
+confidence := confidence + (adxValue > 40 ? 0.05 : 0.0)
+confidence := confidence + (volumeRatio > 1.5 ? 0.1 : 0.0)
+confidence := confidence + (volumeRatio > 2.0 ? 0.05 : 0.0)
+confidence := math.min(confidence, 0.9)
+
+// ─── Webhook Alert Messages ─────────────────────────────────────────────────
+longMsg = '{"token":"' + webhookToken + '","strategy":"momentum_scalp","action":"long_entry","instrument":"{{ticker}}","price":{{close}},"stop_loss":' + str.tostring(longStop, "#.##") + ',"take_profit":' + str.tostring(longTarget, "#.##") + ',"confidence":' + str.tostring(confidence, "#.##") + ',"timestamp":"{{time}}","metadata":{"rsi":' + str.tostring(rsiValue, "#.##") + ',"adx":' + str.tostring(adxValue, "#.##") + ',"volume_ratio":' + str.tostring(volumeRatio, "#.##") + '}}'
+
+shortMsg = '{"token":"' + webhookToken + '","strategy":"momentum_scalp","action":"short_entry","instrument":"{{ticker}}","price":{{close}},"stop_loss":' + str.tostring(shortStop, "#.##") + ',"take_profit":' + str.tostring(shortTarget, "#.##") + ',"confidence":' + str.tostring(confidence, "#.##") + ',"timestamp":"{{time}}","metadata":{"rsi":' + str.tostring(rsiValue, "#.##") + ',"adx":' + str.tostring(adxValue, "#.##") + ',"volume_ratio":' + str.tostring(volumeRatio, "#.##") + '}}'
+
+exitLongMsg = '{"token":"' + webhookToken + '","strategy":"momentum_scalp","action":"exit_long","instrument":"{{ticker}}","price":{{close}},"timestamp":"{{time}}"}'
+
+exitShortMsg = '{"token":"' + webhookToken + '","strategy":"momentum_scalp","action":"exit_short","instrument":"{{ticker}}","price":{{close}},"timestamp":"{{time}}"}'
+
+if longCondition
+    alert(longMsg, alert.freq_once_per_bar)
+if shortCondition
+    alert(shortMsg, alert.freq_once_per_bar)
+
+// Exit alerts
+if strategy.position_size[1] > 0 and strategy.position_size <= 0
+    alert(exitLongMsg, alert.freq_once_per_bar)
+if strategy.position_size[1] < 0 and strategy.position_size >= 0
+    alert(exitShortMsg, alert.freq_once_per_bar)
+
+// ─── Visual ─────────────────────────────────────────────────────────────────
+plot(emaFast, "Fast EMA", color=color.orange, linewidth=1)
+plot(emaSlow, "Slow EMA", color=color.blue, linewidth=2)
+
+plotshape(longCondition, "Long Entry", shape.triangleup,
+     location.belowbar, color.green, size=size.small)
+plotshape(shortCondition, "Short Entry", shape.triangledown,
+     location.abovebar, color.red, size=size.small)
+
+// Background color for trending conditions
+bgcolor(hasTrend and hasVolume and inSession ? color.new(color.green, 95) : na,
+     title="Favorable Conditions")

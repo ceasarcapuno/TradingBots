@@ -1,0 +1,119 @@
+// =============================================================================
+// VWAP Mean Reversion Strategy — TradingView Pine Script v5
+// Generates webhook alerts for the autonomous trading system
+// =============================================================================
+// Deploy: Add to TradingView chart on ES/NQ futures (5-min timeframe recommended)
+// Configure alerts: Set webhook URL to your server endpoint
+// =============================================================================
+
+//@version=5
+strategy("VWAP Reversion [Webhook]", overlay=true,
+     default_qty_type=strategy.fixed, default_qty_value=1,
+     initial_capital=50000, commission_value=2.5,
+     slippage=1, process_orders_on_close=false)
+
+// ─── Inputs ──────────────────────────────────────────────────────────────────
+atrPeriod       = input.int(14, "ATR Period", minval=5)
+atrDeviation    = input.float(1.5, "ATR Deviation from VWAP", step=0.1)
+adxPeriod       = input.int(14, "ADX Period", minval=5)
+adxMax          = input.int(30, "Max ADX (skip trending)", minval=15)
+volumeMinRatio  = input.float(0.8, "Min Volume Ratio", step=0.1)
+rrRatio         = input.float(1.5, "Risk:Reward Ratio", step=0.1)
+maxStopATR      = input.float(2.0, "Max Stop Distance (ATR)", step=0.1)
+webhookToken    = input.string("YOUR_SECRET_TOKEN", "Webhook Auth Token")
+
+// ─── Session Filter ─────────────────────────────────────────────────────────
+// Only trade during Regular Trading Hours (8:30 AM - 3:00 PM CT)
+inSession = not na(time(timeframe.period, "0830-1500", "America/Chicago"))
+
+// ─── Indicators ─────────────────────────────────────────────────────────────
+vwapValue   = ta.vwap(close)
+atrValue    = ta.atr(atrPeriod)
+volumeAvg   = ta.sma(volume, 20)
+volumeRatio = volume / volumeAvg
+
+// ADX Calculation
+[diPlus, diMinus, adxValue] = ta.dmi(adxPeriod, adxPeriod)
+
+// VWAP deviation in ATR units
+deviation = (close - vwapValue) / atrValue
+
+// ─── Reversal Candle Detection ──────────────────────────────────────────────
+bodySize   = math.abs(close - open)
+totalRange = high - low
+lowerWick  = math.min(open, close) - low
+upperWick  = high - math.max(open, close)
+
+isBullishReversal = totalRange > 0 and
+     (lowerWick / totalRange > 0.4) and
+     (bodySize / totalRange < 0.4) and
+     close >= open
+
+isBearishReversal = totalRange > 0 and
+     (upperWick / totalRange > 0.4) and
+     (bodySize / totalRange < 0.4) and
+     close <= open
+
+// ─── Entry Conditions ───────────────────────────────────────────────────────
+notTrending   = adxValue < adxMax
+hasVolume     = volumeRatio >= volumeMinRatio
+noOpenTrade   = strategy.position_size == 0
+
+// Long: Price below VWAP by threshold + bullish reversal
+longCondition = inSession and noOpenTrade and notTrending and hasVolume and
+     deviation <= -atrDeviation and isBullishReversal
+
+// Short: Price above VWAP by threshold + bearish reversal
+shortCondition = inSession and noOpenTrade and notTrending and hasVolume and
+     deviation >= atrDeviation and isBearishReversal
+
+// ─── Stop Loss & Take Profit ────────────────────────────────────────────────
+longStopDist  = math.min(atrValue * maxStopATR, close - low)
+shortStopDist = math.min(atrValue * maxStopATR, high - close)
+
+longStop    = close - longStopDist
+longTarget  = vwapValue  // Target is VWAP
+shortStop   = close + shortStopDist
+shortTarget = vwapValue  // Target is VWAP
+
+// ─── Trade Execution ────────────────────────────────────────────────────────
+if longCondition
+    strategy.entry("Long", strategy.long)
+    strategy.exit("Long Exit", "Long", stop=longStop, limit=longTarget)
+
+if shortCondition
+    strategy.entry("Short", strategy.short)
+    strategy.exit("Short Exit", "Short", stop=shortStop, limit=shortTarget)
+
+// Force exit at end of session
+if not inSession and strategy.position_size != 0
+    strategy.close_all("Session End")
+
+// ─── Webhook Alert Messages ─────────────────────────────────────────────────
+// These JSON payloads are sent to your webhook server
+// TradingView replaces {{...}} placeholders at alert time
+
+longAlertMsg = '{"token":"' + webhookToken + '","strategy":"vwap_reversion","action":"long_entry","instrument":"{{ticker}}","price":{{close}},"stop_loss":' + str.tostring(longStop) + ',"take_profit":' + str.tostring(longTarget) + ',"confidence":' + str.tostring(math.min(0.9, 0.5 + math.abs(deviation) * 0.1)) + ',"timestamp":"{{time}}"}'
+
+shortAlertMsg = '{"token":"' + webhookToken + '","strategy":"vwap_reversion","action":"short_entry","instrument":"{{ticker}}","price":{{close}},"stop_loss":' + str.tostring(shortStop) + ',"take_profit":' + str.tostring(shortTarget) + ',"confidence":' + str.tostring(math.min(0.9, 0.5 + math.abs(deviation) * 0.1)) + ',"timestamp":"{{time}}"}'
+
+exitAlertMsg = '{"token":"' + webhookToken + '","strategy":"vwap_reversion","action":"flatten","instrument":"{{ticker}}","price":{{close}},"timestamp":"{{time}}"}'
+
+if longCondition
+    alert(longAlertMsg, alert.freq_once_per_bar)
+if shortCondition
+    alert(shortAlertMsg, alert.freq_once_per_bar)
+if not inSession and strategy.position_size[1] != 0 and strategy.position_size == 0
+    alert(exitAlertMsg, alert.freq_once_per_bar)
+
+// ─── Visual ─────────────────────────────────────────────────────────────────
+plot(vwapValue, "VWAP", color=color.blue, linewidth=2)
+upperBand = vwapValue + atrValue * atrDeviation
+lowerBand = vwapValue - atrValue * atrDeviation
+plot(upperBand, "Upper Band", color=color.red, style=plot.style_circles)
+plot(lowerBand, "Lower Band", color=color.green, style=plot.style_circles)
+
+plotshape(longCondition, "Long Signal", shape.triangleup,
+     location.belowbar, color.green, size=size.small)
+plotshape(shortCondition, "Short Signal", shape.triangledown,
+     location.abovebar, color.red, size=size.small)

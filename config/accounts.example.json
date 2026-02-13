@@ -1,0 +1,182 @@
+[
+  {
+    "account_id": "APEX_01",
+    "phase": "EVAL",
+    "starting_balance": 50000.0,
+    "credentials": {
+      "username": "apex_account_01",
+      "password": "CHANGE_ME"
+    }
+  },
+  {
+    "account_id": "APEX_02",
+    "phase": "EVAL",
+    "starting_balance": 50000.0,
+    "credentials": {
+      "username": "apex_account_02",
+      "password": "CHANGE_ME"
+    }
+  },
+  {
+    "account_id": "APEX_03",
+    "phase": "EVAL",
+    "starting_balance": 50000.0,
+    "credentials": {
+      "username": "apex_account_03",
+      "password": "CHANGE_ME"
+    }
+  },
+  {
+    "account_id": "APEX_04",
+    "phase": "EVAL",
+    "starting_balance": 50000.0,
+    "credentials": {
+      "username": "apex_account_04",
+      "password": "CHANGE_ME"
+    }
+  },
+  {
+    "account_id": "APEX_05",
+    "phase": "EVAL",
+    "starting_balance": 50000.0,
+    "credentials": {
+      "username": "apex_account_05",
+      "password": "CHANGE_ME"
+    }
+  },
+  {
+    "account_id": "APEX_06",
+    "phase": "EVAL",
+    "starting_balance": 50000.0,
+    "credentials": {
+      "username": "apex_account_06",
+      "password": "CHANGE_ME"
+    }
+  },
+  {
+    "account_id": "APEX_07",
+    "phase": "EVAL",
+    "starting_balance": 50000.0,
+    "credentials": {
+      "username": "apex_account_07",
+      "password": "CHANGE_ME"
+    }
+  },
+  {
+    "account_id": "APEX_08",
+    "phase": "EVAL",
+    "starting_balance": 50000.0,
+    "credentials": {
+      "username": "apex_account_08",
+      "password": "CHANGE_ME"
+    }
+  },
+  {
+    "account_id": "APEX_09",
+    "phase": "EVAL",
+    "starting_balance": 50000.0,
+    "credentials": {
+      "username": "apex_account_09",
+      "password": "CHANGE_ME"
+    }
+  },
+  {
+    "account_id": "APEX_10",
+    "phase": "EVAL",
+    "starting_balance": 50000.0,
+    "credentials": {
+      "username": "apex_account_10",
+      "password": "CHANGE_ME"
+    }
+  },
+  {
+    "account_id": "APEX_11",
+    "phase": "EVAL",
+    "starting_balance": 50000.0,
+    "credentials": {
+      "username": "apex_account_11",
+      "password": "CHANGE_ME"
+    }
+  },
+  {
+    "account_id": "APEX_12",
+    "phase": "EVAL",
+    "starting_balance": 50000.0,
+    "credentials": {
+      "username": "apex_account_12",
+      "password": "CHANGE_ME"
+    }
+  },
+  {
+    "account_id": "APEX_13",
+    "phase": "EVAL",
+    "starting_balance": 50000.0,
+    "credentials": {
+      "username": "apex_account_13",
+      "password": "CHANGE_ME"
+    }
+  },
+  {
+    "account_id": "APEX_14",
+    "phase": "EVAL",
+    "starting_balance": 50000.0,
+    "credentials": {
+      "username": "apex_account_14",
+      "password": "CHANGE_ME"
+    }
+  },
+  {
+    "account_id": "APEX_15",
+    "phase": "EVAL",
+    "starting_balance": 50000.0,
+    "credentials": {
+      "username": "apex_account_15",
+      "password": "CHANGE_ME"
+    }
+  },
+  {
+    "account_id": "APEX_16",
+    "phase": "EVAL",
+    "starting_balance": 50000.0,
+    "credentials": {
+      "username": "apex_account_16",
+      "password": "CHANGE_ME"
+    }
+  },
+  {
+    "account_id": "APEX_17",
+    "phase": "EVAL",
+    "starting_balance": 50000.0,
+    "credentials": {
+      "username": "apex_account_17",
+      "password": "CHANGE_ME"
+    }
+  },
+  {
+    "account_id": "APEX_18",
+    "phase": "EVAL",
+    "starting_balance": 50000.0,
+    "credentials": {
+      "username": "apex_account_18",
+      "password": "CHANGE_ME"
+    }
+  },
+  {
+    "account_id": "APEX_19",
+    "phase": "EVAL",
+    "starting_balance": 50000.0,
+    "credentials": {
+      "username": "apex_account_19",
+      "password": "CHANGE_ME"
+    }
+  },
+  {
+    "account_id": "APEX_20",
+    "phase": "EVAL",
+    "starting_balance": 50000.0,
+    "credentials": {
+      "username": "apex_account_20",
+      "password": "CHANGE_ME"
+    }
+  }
+]
