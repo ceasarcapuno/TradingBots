@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Autonomous Trading System — Apex Trader Funding</title>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --surface: #161b22;
+            --border: #30363d;
+            --text: #e6edf3;
+            --text-muted: #8b949e;
+            --accent: #58a6ff;
+            --green: #3fb950;
+            --red: #f85149;
+            --yellow: #d29922;
+            --orange: #db6d28;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+        header {
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 2rem;
+            margin-bottom: 2rem;
+        }
+        header h1 { font-size: 2rem; font-weight: 600; margin-bottom: 0.5rem; }
+        header p { color: var(--text-muted); font-size: 1.1rem; }
+
+        .badge {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-right: 0.5rem;
+        }
+        .badge-green { background: rgba(63,185,80,0.15); color: var(--green); }
+        .badge-yellow { background: rgba(210,153,34,0.15); color: var(--yellow); }
+        .badge-blue { background: rgba(88,166,255,0.15); color: var(--accent); }
+        .badge-red { background: rgba(248,81,73,0.15); color: var(--red); }
+
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+        .card h2 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .card h3 { font-size: 0.95rem; color: var(--accent); margin: 1rem 0 0.5rem; }
+        .card ul { list-style: none; }
+        .card li { padding: 0.3rem 0; color: var(--text-muted); font-size: 0.9rem; }
+        .card li::before { content: "›"; color: var(--accent); margin-right: 0.5rem; font-weight: bold; }
+        .card code {
+            background: rgba(88,166,255,0.1);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            color: var(--accent);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        th, td {
+            text-align: left;
+            padding: 0.6rem 0.8rem;
+            border-bottom: 1px solid var(--border);
+        }
+        th { color: var(--text-muted); font-weight: 500; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; }
+
+        .arch-diagram {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            overflow-x: auto;
+        }
+        .arch-diagram pre {
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin: 2.5rem 0 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .flow-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 0.8rem 0;
+        }
+        .flow-num {
+            width: 28px;
+            height: 28px;
+            background: rgba(88,166,255,0.15);
+            color: var(--accent);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+        .flow-text { font-size: 0.9rem; color: var(--text-muted); }
+        .flow-text strong { color: var(--text); }
+
+        footer {
+            margin-top: 3rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Autonomous Trading System</h1>
+            <p>Apex Trader Funding &mdash; 20-Account EVAL/PERFORMANCE Framework</p>
+            <div style="margin-top: 1rem;">
+                <span class="badge badge-green">Defense-First</span>
+                <span class="badge badge-blue">TradingView Webhooks</span>
+                <span class="badge badge-yellow">20 Accounts</span>
+                <span class="badge badge-red">Futures: ES / NQ</span>
+            </div>
+        </header>
+
+        <h2 class="section-title">System Architecture</h2>
+        <div class="arch-diagram">
+<pre>
+TradingView Pine Script (3 strategies)
+        |
+        v  Webhook (HTTPS POST, JSON)
++-------------------------------------------+
+|          Webhook Server (FastAPI)          |
+|   Token auth, rate limiting, age check    |
++------------------+------------------------+
+                   |
+                   v
++-------------------------------------------+
+|          Copy Trading Engine              |
+|   Account grouping (4 groups of 5)        |
+|   Timing jitter (0.5-5s gaussian)         |
+|   Size variance (+/-20%)                  |
+|   Skip probability (10%)                  |
+|   Strategy rotation per group             |
++------------------+------------------------+
+                   |
+          +--------+--------+
+          v        v        v
+     +--------+ +--------+ +--------+
+     |  Risk  | |Compli- | | Market |
+     |Manager | | ance   | | Intel  |
+     |(4-layer)| |(Apex)  | |(News)  |
+     +---+----+ +---+----+ +---+----+
+         |          |           |
+         +----------+-----------+
+                    |
+                    v
++-------------------------------------------+
+|          Account Manager                  |
+|    20x TradovateClient instances          |
+|    Order routing, state sync, flatten     |
++------------------+------------------------+
+                   |
+                   v
+            Tradovate API
+           (20 accounts)
+</pre>
+        </div>
+
+        <h2 class="section-title">Core Components</h2>
+        <div class="grid">
+            <div class="card">
+                <h2>Risk Management (4 Layers)</h2>
+                <h3>Layer 1: Pre-Trade Validation</h3>
+                <ul>
+                    <li>9 independent checks gate every order</li>
+                    <li>Daily loss limit: $500/account</li>
+                    <li>Single trade risk cap: $150</li>
+                    <li>Max 2 open positions per account</li>
+                </ul>
+                <h3>Layer 2: Dynamic Position Sizing</h3>
+                <ul>
+                    <li>Base: 1 ES/NQ contract</li>
+                    <li>Scale up only with $1,500+ profit buffer</li>
+                    <li>Confidence-weighted from signal quality</li>
+                </ul>
+                <h3>Layer 3: Circuit Breakers</h3>
+                <ul>
+                    <li>30% DD used &rarr; reduce size</li>
+                    <li>50% DD used &rarr; minimal size only</li>
+                    <li>70% DD used &rarr; HALT + emergency flatten</li>
+                </ul>
+                <h3>Layer 4: Portfolio Aggregation</h3>
+                <ul>
+                    <li>$5,000 cross-account daily loss limit</li>
+                    <li>Max 10 simultaneous positions total</li>
+                    <li>Correlated instrument exposure limit</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h2>Apex Compliance Framework</h2>
+                <table>
+                    <tr><th>Rule</th><th>EVAL ($50K)</th></tr>
+                    <tr><td>Profit target</td><td>$3,000</td></tr>
+                    <tr><td>Trailing threshold</td><td>$2,500 (EOD)</td></tr>
+                    <tr><td>Max contracts ES/NQ</td><td>10</td></tr>
+                    <tr><td>Min trading days</td><td>7</td></tr>
+                    <tr><td>Close window</td><td>4:59-6:00 PM CT</td></tr>
+                </table>
+                <h3>Real-Time Monitoring (30s cycle)</h3>
+                <ul>
+                    <li>Trading window enforcement</li>
+                    <li>Auto-flatten 2 min before close</li>
+                    <li>EVAL pass detection (profit + days)</li>
+                    <li>Drawdown threshold verification</li>
+                    <li>Weekend position checking</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h2>Trading Strategies</h2>
+                <h3>1. VWAP Mean Reversion</h3>
+                <ul>
+                    <li>Edge: Price reverts to VWAP in range-bound sessions</li>
+                    <li>Entry: 1.5+ ATR deviation + reversal candle</li>
+                    <li>Win rate target: 60-70%</li>
+                    <li>Best: Regular hours, choppy markets</li>
+                </ul>
+                <h3>2. Opening Range Breakout</h3>
+                <ul>
+                    <li>Edge: Institutional flow at RTH open</li>
+                    <li>Entry: 15-min range breakout + volume surge</li>
+                    <li>Win rate target: 45-55%</li>
+                    <li>Best: Trend days, news catalysts</li>
+                </ul>
+                <h3>3. Momentum Scalp</h3>
+                <ul>
+                    <li>Edge: Short-term momentum persistence</li>
+                    <li>Entry: 8/21 EMA cross + RSI + volume</li>
+                    <li>Win rate target: 50-60%</li>
+                    <li>Best: Trending sessions, high volume</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h2>Copy Trading &mdash; Detection Avoidance</h2>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
+                    7 techniques make 20 accounts appear independent:
+                </p>
+                <ul>
+                    <li><strong>Timing jitter:</strong> Gaussian 0.5-5.0s delays</li>
+                    <li><strong>Size variance:</strong> &plusmn;20% per account</li>
+                    <li><strong>Skip probability:</strong> 10% random skip</li>
+                    <li><strong>Account grouping:</strong> 4 groups of 5, one active</li>
+                    <li><strong>Strategy rotation:</strong> Different combos per group</li>
+                    <li><strong>Price variance:</strong> &plusmn;2 ticks on limits</li>
+                    <li><strong>Random ordering:</strong> Shuffled each signal</li>
+                </ul>
+                <h3>Group Strategy Distribution</h3>
+                <table>
+                    <tr><th>Group</th><th>Strategies</th></tr>
+                    <tr><td>0 (Acct 1-5)</td><td>VWAP + Momentum</td></tr>
+                    <tr><td>1 (Acct 6-10)</td><td>ORB + VWAP</td></tr>
+                    <tr><td>2 (Acct 11-15)</td><td>Momentum + ORB</td></tr>
+                    <tr><td>3 (Acct 16-20)</td><td>All three</td></tr>
+                </table>
+            </div>
+
+            <div class="card">
+                <h2>Market Intelligence</h2>
+                <h3>News Blackout Events</h3>
+                <table>
+                    <tr><th>Event</th><th>Blackout</th></tr>
+                    <tr><td>FOMC Decision</td><td>-15 / +30 min</td></tr>
+                    <tr><td>Non-Farm Payrolls</td><td>-10 / +15 min</td></tr>
+                    <tr><td>CPI Release</td><td>-10 / +10 min</td></tr>
+                    <tr><td>GDP Release</td><td>-10 / +10 min</td></tr>
+                    <tr><td>Jobless Claims</td><td>-3 / +3 min</td></tr>
+                </table>
+                <h3>Volatility Monitoring</h3>
+                <ul>
+                    <li>1.5x ATR &rarr; reduce position sizes</li>
+                    <li>2.0x ATR &rarr; volatility spike alert</li>
+                    <li>3.0x ATR &rarr; halt all new entries</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h2>Webhook Signal Flow</h2>
+                <div class="flow-step">
+                    <div class="flow-num">1</div>
+                    <div class="flow-text"><strong>TradingView alert fires</strong> &mdash; Pine Script generates JSON payload with strategy, action, price, stops</div>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-num">2</div>
+                    <div class="flow-text"><strong>Webhook server receives</strong> &mdash; Validates token, checks signal age (&lt;30s), rate limits</div>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-num">3</div>
+                    <div class="flow-text"><strong>Copy engine distributes</strong> &mdash; Selects active group, applies variance, staggers execution</div>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-num">4</div>
+                    <div class="flow-text"><strong>Risk + Compliance check</strong> &mdash; Each account validated independently before order</div>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-num">5</div>
+                    <div class="flow-text"><strong>Tradovate execution</strong> &mdash; Bracket orders placed with account-specific parameters</div>
+                </div>
+            </div>
+        </div>
+
+        <h2 class="section-title">Quick Start</h2>
+        <div class="card" style="max-width: 700px;">
+            <div class="flow-step">
+                <div class="flow-num">1</div>
+                <div class="flow-text">Clone the repo and install: <code>pip install -r requirements.txt</code></div>
+            </div>
+            <div class="flow-step">
+                <div class="flow-num">2</div>
+                <div class="flow-text">Copy <code>.env.example</code> to <code>.env</code> and configure credentials</div>
+            </div>
+            <div class="flow-step">
+                <div class="flow-num">3</div>
+                <div class="flow-text">Copy <code>config/accounts.example.json</code> and add your 20 accounts</div>
+            </div>
+            <div class="flow-step">
+                <div class="flow-num">4</div>
+                <div class="flow-text">Deploy Pine Script strategies to TradingView and configure webhook alerts</div>
+            </div>
+            <div class="flow-step">
+                <div class="flow-num">5</div>
+                <div class="flow-text">Start in dry run: <code>python main.py</code></div>
+            </div>
+            <div class="flow-step">
+                <div class="flow-num">6</div>
+                <div class="flow-text">Go live: <code>python main.py --live --accounts config/accounts.json</code></div>
+            </div>
+        </div>
+
+        <h2 class="section-title">Project Structure</h2>
+        <div class="card" style="max-width: 700px;">
+<pre style="font-family: 'SFMono-Regular', Consolas, monospace; font-size: 0.85rem; color: var(--text-muted); line-height: 1.7;">
+<span style="color: var(--accent);">main.py</span>                           Entry point
+<span style="color: var(--accent);">config/settings.py</span>                All configuration (env-driven)
+<span style="color: var(--accent);">src/core/orchestrator.py</span>          Main system coordinator
+<span style="color: var(--accent);">src/core/models.py</span>                Data models
+<span style="color: var(--accent);">src/core/events.py</span>                Async event bus
+<span style="color: var(--accent);">src/risk/risk_manager.py</span>           4-layer risk engine
+<span style="color: var(--accent);">src/compliance/apex_compliance.py</span>  Apex rule enforcement
+<span style="color: var(--accent);">src/strategies/</span>                   3 Python strategies
+<span style="color: var(--accent);">src/webhooks/webhook_server.py</span>     FastAPI webhook receiver
+<span style="color: var(--accent);">src/copy_trading/copy_engine.py</span>    Multi-account distribution
+<span style="color: var(--accent);">src/accounts/</span>                     Tradovate API client + manager
+<span style="color: var(--accent);">src/market_intel/news_filter.py</span>    Economic calendar + volatility
+<span style="color: var(--accent);">src/monitoring/</span>                   Performance analytics
+<span style="color: var(--accent);">pinescript/</span>                        3 TradingView Pine Script v5 strategies
+<span style="color: var(--accent);">tests/</span>                            Risk manager + compliance tests
+</pre>
+        </div>
+
+        <footer>
+            Autonomous Trading System &mdash; Built for Apex Trader Funding $50K EVAL accounts
+        </footer>
+    </div>
+</body>
+</html>
